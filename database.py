@@ -1,8 +1,8 @@
 import json
 import traceback
 import deepdiff
-from MyFinalProject.timeDeco import timeit
-from MyFinalProject.logger import Logger,log_on_end,log_exception,log_on_start,log_on_error
+from FinalVersion.timeDeco import timeit
+from FinalVersion.logger import Logger,log_on_end,log_exception,log_on_start,log_on_error
 
 mainLogger = Logger('DEBUG', "master.log", '%(asctime)s | %(name)s | %(levelname)s | %(message)s', 'LoggerExample')
 
@@ -27,21 +27,19 @@ def DatabaseDictionary(Databaseobj=None):
     with open("DatabaseInfo{}.txt".format(version['database']),'w') as j:
 
 # determining and version of the Database and tracking it in a txt file
-
-        # version_r = requests.get(url+'version')
-        # version = json.loads(version_r.text)
+       
         j.writelines(' Database version is {}\n'.format(version['database']))
         dictmodel['Version']=version['database']        
 
 # creating the child key in our dictionary
 
-        dictmodel['Audits']={}
+        dictmodel['Childs']={}
 
-        audits=Databaseobj.getAudits()
+        audits=Databaseobj.getChilds()
 
         for audit in audits:
-            dictmodel['Audits'][audit['audit_id']]={}
-            dictmodel['Audits'][audit['audit_id']]['name']=audit['title']
+            dictmodel['Childs'][audit['child_id']]={}
+            dictmodel['Childs'][audit['child_id']]['name']=audit['title']
 
 # creating the parent key of the dictmodel
 
@@ -53,7 +51,7 @@ def DatabaseDictionary(Databaseobj=None):
             parent=Databaseobj.getParents(parent['uuid'])
             j.write(" Parent: {}, UUID: {}, Test:{}".format(parent['name'],parent['uuid'],parent['test']))
             dictmodel['Parents'][parent['uuid']]={}
-            dictmodel['Parents'][parent['uuid']]['auditlist']={}
+            dictmodel['Parents'][parent['uuid']]['childlist']={}
             dictmodel['Parents'][parent['uuid']]['test']=parent['test']
             dictmodel['Parents'][parent['uuid']]['name']=parent['name']
             dictmodel['Parents'][parent['uuid']]['category']= parent['category']
@@ -65,7 +63,7 @@ def DatabaseDictionary(Databaseobj=None):
                         j.write(" ".format(Child_member['member_id'],Databaseobj.getChilds(Child_member['member_id'])['title']
                                                ,Databaseobj.getChilds(Child_member['member_id'])['direction']))
 
-                    dictmodel['Parents'][parent['uuid']]['childlist'][Child_member['member_id']]\
+                    dictmodel['Parents'][parent['uuid']]['childlist'][Child_member['member_id']]
                         =Databaseobj.getChilds(Child_member['member_id'])['title']
 
             j.write("Total number of childs {}\n\n".format(len(dictmodel['Parents'][parent['uuid']]['childlist'])))
@@ -173,7 +171,7 @@ def getDifferences(d1,d2,filename=None):
                                         d1[k]['childlist']), d2Version, len(d2[k]['childlist'])))
 
                                 NotFoundElementsList = [notFoundelem + " - " + d1[k]['childlist'][notFoundelem] for notFoundelem in
-                                                      d1[k]['auditlist'] if notFoundelem not in d2[k]['childlist']]
+                                                      d1[k]['childlist'] if notFoundelem not in d2[k]['childlist']]
 
                                 if NotFoundElementsList:
                                     f.write(
@@ -199,7 +197,6 @@ def getDifferences(d1,d2,filename=None):
                             f.write(
                                 '\n"Check: {} Key: {}\":\nEXPECTED d1-{} : \"{}\";\nFOUND d2-{}  :    \"{}\"!!!'.format(
                                     path, k, d1Version, d1[k], d2Version, d2[k]))
-
 
 
 
@@ -372,7 +369,7 @@ def Summary(d1,d2,file=None):
                 'old_value']))
             f.write("\nTotal false tests differences: {}\n\n".format(Totals_summary[k]["root['TotalFalseTests']"]['new_value'] - Totals_summary[k]["root['TotalFalseTests']"][
                 'old_value']))
-            f.write("\nTotal childs differences: {}".format(Totals_summary[k]["root['TotalChildsinPArents']"]['new_value'] -
+            f.write("\nTotal childs differences: {}".format(Totals_summary[k]["root['TotalChildsinParents']"]['new_value'] -
                 Totals_summary[k]["root['TotalChildsinParents']"]['old_value']))
 
         f.write("\n\n***************************************************************************")
