@@ -54,17 +54,15 @@ def DatabaseDictionary(Databaseobj=None):
             dictmodel['Parents'][parent['uuid']]['childlist']={}
             dictmodel['Parents'][parent['uuid']]['test']=parent['test']
             dictmodel['Parents'][parent['uuid']]['name']=parent['name']
-            dictmodel['Parents'][parent['uuid']]['category']= parent['category']
+            dictmodel['Parents'][parent['uuid']]['type']= parent['type']
             dictmodel['Parents'][parent['uuid']]['uuid']= parent['uuid']
-            for Parent_stage in parent['parent_stages']:
-                for child_list in Parent_stage['child_lists']:
+            for Parent_sections in parent['parent_sections']:
+                for child_list in parent_sections['child_lists']:
                     for child_member in child_list['child_list_members']:
-
-                        j.write(" ".format(Child_member['member_id'],Databaseobj.getChilds(Child_member['member_id'])['title']
-                                               ,Databaseobj.getChilds(Child_member['member_id'])['direction']))
-
+                        j.write("{}{} ".format(Child_member['member_id'],Databaseobj.getChilds(Child_member['member_id'])['title'])
+                               )
                     dictmodel['Parents'][parent['uuid']]['childlist'][Child_member['member_id']]
-                        =Databaseobj.getChilds(Child_member['member_id'])['title']
+                        =Databaseobj.getChilds(Child_member['member_id'])['name']
 
             j.write("Total number of childs {}\n\n".format(len(dictmodel['Parents'][parent['uuid']]['childlist'])))
 
@@ -143,10 +141,10 @@ def getDifferences(d1,d2,filename=None):
 
             for k in d1.keys():
                 if isinstance(d2, dict) and k not in d2:
-                    if all([_ in d1[k] for _ in ['name', 'uuid', 'category', 'childlist', 'test']]):
+                    if all([_ in d1[k] for _ in ['name', 'uid', 'category', 'childlist', 'test']]):
                         f.write("\n {}\n{}:{}\nUUID:{}\nTEST:{}\n\n".format(
                             "=" * len("{}:{}".format('Parent', d1[k]['name'])), 'Parent', d1[k]['name'],
-                            d1[k]['uuid'], d1[k]['test']))
+                            d1[k]['uid'], d1[k]['test']))
                         f.write("\n Expected Parent(d1:{}) {} was not found in (d2:{})".format(d1Version,
                                                                                                    d1[k]['name'],
                                                                                                    d2Version))
@@ -160,10 +158,10 @@ def getDifferences(d1,d2,filename=None):
                 else:
                     if isinstance(d1[k], dict):
 
-                        if all([_ in d1[k] for _ in ['name', 'uuid', 'category', 'childlist', 'test']]):
+                        if all([_ in d1[k] for _ in ['name', 'uid', 'childlist', 'test']]):
                             f.write("\n" + "{}\n{}:{}\nUUID:{}\nTEST:{}\n\n".format(
                                 "*" * len("{}:{}".format('Parent', d1[k]['name'])), 'Parent', d1[k]['name'],
-                                d1[k]['uuid'], d1[k]['test']))
+                                d1[k]['uid'], d1[k]['test']))
 
                             if len(d1[k]['childlist']) != len(d2[k]['childlist']):
                                 f.write(
@@ -250,7 +248,6 @@ def getDifferences(d1,d2,filename=None):
                                     path, k, d1[k], d2[k]))
 
 
-
         def checkMissingElements(d1,d2):
 
             if len(d1) != len(d2):
@@ -271,18 +268,17 @@ def getDifferences(d1,d2,filename=None):
 
         for checkType in sorted(d1.keys()):
             if checkType == "Totals":
-                f.write("\n" + "*" * 50 + "{}".format(checkType) + "*" * 50 + "\n")
+                f.write("\n" + "*" * 10 + "{}".format(checkType) + "*" * 10 + "\n")
                 locals()[checkType](d1[checkType], d2[checkType])
             else:
-                f.write("\n" + "*" * 50 + "{}".format(checkType) + "*" * 50 + "\n")
+                f.write("\n" + "*" * 10 + "{}".format(checkType) + "*" * 10 + "\n")
                 differences_summary[checkType] = checkMissingElements(d1[checkType], d2[checkType])
                 try:
                     if callable(locals()[checkType]):
                         locals()[checkType](d1[checkType], d2[checkType])
                 except KeyError as e:
-                    print ('WARNING: No callable function for {}'.format(checkType))
-                    print (e)
-                    print (traceback.format_exc())
+                    print ('WARNING: No callable function for {}, encountered error {}'.format(checkType,e))
+                 
 
     return d1Version, d1, d2Version, d2, differences_summary, childsinParents_differences
 
