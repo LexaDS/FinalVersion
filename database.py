@@ -31,7 +31,7 @@ def DatabaseDictionary(Databaseobj=None):
         # version_r = requests.get(url+'version')
         # version = json.loads(version_r.text)
         j.writelines(' Database version is {}\n'.format(version['database']))
-        dictmodel['Version']=version['database']
+        dictmodel['Version']=version['database']        
 
 # creating the child key in our dictionary
 
@@ -50,30 +50,31 @@ def DatabaseDictionary(Databaseobj=None):
         parents=Databaseobj.getParents()
 
         for parent in parents:
-            parent=Databaseobj.getAssessments(parent['uuid'])
-            j.write(" Assessment: {}, UUID: {}, Test:{}".format(parent['name'],parent['uuid'],parent['test']))
-            dictmodel['Assessments'][parent['uuid']]={}
-            dictmodel['Assessments'][parent['uuid']]['auditlist']={}
-            dictmodel['Assessments'][parent['uuid']]['test']=parent['test']
-            dictmodel['Assessments'][parent['uuid']]['name']=parent['name']
-            dictmodel['Assessments'][parent['uuid']]['category']= parent['category']
-            dictmodel['Assessments'][parent['uuid']]['uuid']= parent['uuid']
-            for Parent_stage in parent['assessment_stages']:
-                for child_list in Parent_stage['audit_lists']:
-                    for child_member in child_list['audit_list_members']:
+            parent=Databaseobj.getParents(parent['uuid'])
+            j.write(" Parent: {}, UUID: {}, Test:{}".format(parent['name'],parent['uuid'],parent['test']))
+            dictmodel['Parents'][parent['uuid']]={}
+            dictmodel['Parents'][parent['uuid']]['auditlist']={}
+            dictmodel['Parents'][parent['uuid']]['test']=parent['test']
+            dictmodel['Parents'][parent['uuid']]['name']=parent['name']
+            dictmodel['Parents'][parent['uuid']]['category']= parent['category']
+            dictmodel['Parents'][parent['uuid']]['uuid']= parent['uuid']
+            for Parent_stage in parent['parent_stages']:
+                for child_list in Parent_stage['child_lists']:
+                    for child_member in child_list['child_list_members']:
 
-                        j.write(" ".format(Child_member['member_id'],Databaseobj.getAudits(Child_member['member_id'])['title']
-                                               ,Databaseobj.getAudits(Child_member['member_id'])['direction']))
+                        j.write(" ".format(Child_member['member_id'],Databaseobj.getChilds(Child_member['member_id'])['title']
+                                               ,Databaseobj.getChilds(Child_member['member_id'])['direction']))
 
-                    dictmodel['Assessments'][parent['uuid']]['auditlist'][Child_member['member_id']]\
-                        =Databaseobj.getAudits(Child_member['member_id'])['title']
+                    dictmodel['Parents'][parent['uuid']]['childlist'][Child_member['member_id']]\
+                        =Databaseobj.getChilds(Child_member['member_id'])['title']
 
-            j.write("Total number of audits {}\n\n".format(len(dictmodel['Assessments'][parent['uuid']]['auditlist'])))
+            j.write("Total number of childs {}\n\n".format(len(dictmodel['Parents'][parent['uuid']]['childlist'])))
 
-        for parent in dictmodel['Assessments']:
-            j.write('Assesment: {} id:{}, Total audits:{} \n'.format(dictmodel['Assessments'][parent]['name'],parent,len(dictmodel['Assessments'][parent]['auditlist'])))
+        for parent in dictmodel['Parents']:
+            j.write('Parent: {} id:{}, Total childs:{} \n'.format(dictmodel['Parents'][parent]['name'],parent,len(dictmodel['Parents'][parent]['childlist'])))
 
 
+            
 # creating the Totals key and calculating the totals
 
         j.write("Totals:")
@@ -87,15 +88,15 @@ def DatabaseDictionary(Databaseobj=None):
         j.write("Total number of Childs: {} \n".format(TotalAudits))
         dictmodel['Totals']['TotalChilds']=TotalAudits
 
-        TotalFalseTests=len([parent for parent in dictmodel['Parents'] if not dictmodel['Parents'][assesment]['test']])
+        TotalFalseTests=len([parent for parent in dictmodel['Parents'] if not dictmodel['Parents'][parent]['test']])
         j.write("Total False Tests: {} \n".format(TotalFalseTests))
         dictmodel['Totals']['TotalFalseTests']=TotalFalseTests
 
-        TotalTrueTests=len([assesment for assesment in dictmodel['Assessments'] if dictmodel['Assessments'][assesment]['test']])
+        TotalTrueTests=len([parent for parent in dictmodel['Parents'] if dictmodel['Parents'][parent]['test']])
         j.write("Total True Tests:{} \n".format(TotalTrueTests))
         dictmodel['Totals']['TotalTrueTests']=TotalTrueTests
 
-        TotalChildsinParents=sum([len(dictmodel['Assessments'][parent]['auditlist']) for parent in dictmodel['Parents']])
+        TotalChildsinParents=sum([len(dictmodel['Parents'][parent]['childlist']) for parent in dictmodel['Parents']])
         j.write('Total childs in parents: {} \n'.format(TotalChildsinParents))
         dictmodel['Totals']['TotalChildsinParents']=TotalChildsinParents
 
@@ -155,8 +156,8 @@ def getDifferences(d1,d2,filename=None):
                             "\n" + "Expected Childs for {} : \nnumber:{} \nlist:\n".format(d1[k]['name'],
                                                                                                       len(d1[k][
                                                                                                               'childlist'])))
-                        for audit in d1[k]['childlist']:
-                              f.write("\n" + audit + " - " + d1[k]['childlist'][audit])
+                        for child in d1[k]['childlist']:
+                              f.write("\n" + child + " - " + d1[k]['childlist'][child])
 
                 else:
                     if isinstance(d1[k], dict):
@@ -306,15 +307,15 @@ def Summary(d1,d2,file=None):
 
     if file is None:
         file="DatabaseDifferencesBetween{}and{}Summary.txt".format(d1Version,d2Version)
-    diff_assessments = deepdiff.DeepDiff(d1['Parents'],d2['Parents'])
-    diff_audits=deepdiff.DeepDiff(d1['Childs'],d2['Childs'])
+    diff_parents = deepdiff.DeepDiff(d1['Parents'],d2['Parents'])
+    diff_childs=deepdiff.DeepDiff(d1['Childs'],d2['Childs'])
     diff_totals=deepdiff.DeepDiff(d1['Totals'],d2['Totals'])
     summary_parents=json.dumps(json.loads(diff_parents.to_json()),indent=2)
     summary_childs=json.dumps(json.loads(diff_childs.to_json()),indent=2)
     summary_totals=json.dumps(json.loads(diff_totals.to_json()),indent=2)
 
     with open(file, "w+") as f:
-        f.write("The differences between version {} and version {} are: \n Summary Assessments:{}\n Summary Audits: {}\n Summary Totals: {} \n".format(d1Version,
+        f.write("The differences between version {} and version {} are: \n Summary Parents:{}\n Summary Childs: {}\n Summary Totals: {} \n".format(d1Version,
                                                                                                                                                        d2Version,summary_parents,summary_childs, summary_totals))
 
 # converting the jsons into dict
@@ -372,7 +373,7 @@ def Summary(d1,d2,file=None):
             f.write("\nTotal false tests differences: {}\n\n".format(Totals_summary[k]["root['TotalFalseTests']"]['new_value'] - Totals_summary[k]["root['TotalFalseTests']"][
                 'old_value']))
             f.write("\nTotal childs differences: {}".format(Totals_summary[k]["root['TotalChildsinPArents']"]['new_value'] -
-                Totals_summary[k]["root['TotalChildsinPArents']"]['old_value']))
+                Totals_summary[k]["root['TotalChildsinParents']"]['old_value']))
 
         f.write("\n\n***************************************************************************")
 
