@@ -11,26 +11,26 @@ class git_control:
 
     def commit(self):
         message = input("\nType in your commit message: ")
-        commit_message = f'{message}'
+        commit_message = '{}'.format(message)
 
         git_control.run("commit", "-am", commit_message)
         git_control.run("push", "-u", "origin", "master")
 
     def branch(self):
 
-        branch = input("\nType in the name of the branch you want to make: ")
-        br = f'{branch}'
+        branch = input("\nType in the name of the branch you wish to create: ")
+        br = '{}'.format(branch)
 
         git_control.run("checkout", "-b", br)
 
-        choice = input("\nDo you want to push the branch right now to GitHub? (y/n): ")
+        choice = input("\n Do you want to push the branch to GitHub? (y/n): ")
         choice = choice.lower()
 
         if choice == "y":
             git_control.run("push", "-u", "origin", br)
 
         elif choice == "n":
-            print("\nOkay, goodbye!\n")
+            print("\nGoodbye!\n")
 
         else:
             print("\nInvalid command! Use y or n.\n")
