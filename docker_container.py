@@ -61,9 +61,8 @@ class DatabaseTemplate(object):
         timeVariable = str(datetime.datetime.now().time())
         self.containerName = containerName + '_' + timeVariable if containerName else self.dockerImageName + '_' + timeVariable
         self.ports = ports
-        self.urls = {'api/v1/assessments': 'api/v1/assessments',
-                     'api/v1/audits': 'api/v1/audits',
-                     'api/v1/services': 'api/v1/services',
+        self.urls = {'api/v1/parents': 'api/v1/parents',
+                     'api/v1/childs': 'api/v1/childs',                     
                      'api/v1/version': 'api/v1/version'}
 
     @timeit
@@ -93,11 +92,11 @@ class DatabaseTemplate(object):
 # we will use the request module to get the assessments of the Database which will be returned in the form of a dictionary
 
 
-    def getAssessments(self,uuid=None):
+    def getParents(self,uuid=None):
         if uuid:
-            r=self.sess.get("http://{}:{}/{}/{}".format(self.externalIP,self.ports['3000'],self.urls['api/v1/assessments'],uuid))
+            r=self.sess.get("http://{}:{}/{}/{}".format(self.externalIP,self.ports['3000'],self.urls['api/v1/parents'],uuid))
         else:
-            r = self.sess.get("http://{}:{}/{}".format(self.externalIP,self.ports['3000'], self.urls['api/v1/assessments']))
+            r = self.sess.get("http://{}:{}/{}".format(self.externalIP,self.ports['3000'], self.urls['api/v1/parents']))
             if r.status_code!=200:
                 raise Exception ("Status code {}.".format(r.status_code))
         return json.loads(r.text)
@@ -105,25 +104,15 @@ class DatabaseTemplate(object):
 # we will use the request module to get the audits of the Database which will be returned in the form of a dictionary
 
 
-    def getAudits(self,member_id=None):
+    def getChilds(self,member_id=None):
         if member_id:
             r = self.sess.get("http://{}:{}/{}/{}".format(self.externalIP,self.ports['3000'],
-                                                   self.urls['api/v1/audits'],member_id))
+                                                   self.urls['api/v1/childs'],member_id))
         else:
             r = self.sess.get("http://{}:{}/{}".format(self.externalIP,self.ports['3000'],
-                                            self.urls['api/v1/audits']))
+                                            self.urls['api/v1/childs']))
             if r.status_code != 200:
                 raise Exception("Status code {}.".format(r.status_code))
-        return json.loads(r.text)
-
-# we will use the request module to get the services of the Database which will be returned in the form of a dictionary
-
-    
-    def getServices(self):
-        r = self.sess.get("http://{}:{}/{}".format(self.externalIP,self.ports['3000'],
-                                                   self.urls['api/v1/services']))
-        if r.status_code != 200:
-            raise Exception("Status code {}.".format(r.status_code))
         return json.loads(r.text)
 
 
@@ -165,8 +154,8 @@ def initVariables(Branch1=None, Version1=None, Branch2=None, Version2=None):
 def init(*args):
 
     # docker code
-    Database1 = DatabaseTemplate(ports={"3000": 3001, "3001": 44431}, branch=args['Branch1'], version=args['Version1'])
-    Database2 = DatabaseTemplate(ports={"3000": 3002, "3001": 44432}, branch=args['Branch2'], version=args['Version2'])
+    Database1 = DatabaseTemplate(ports={"3000": 3001, "3001":49514}, branch=args['Branch1'], version=args['Version1'])
+    Database2 = DatabaseTemplate(ports={"3000": 3001, "3001":49514}, branch=args['Branch2'], version=args['Version2'])
 
 
 
