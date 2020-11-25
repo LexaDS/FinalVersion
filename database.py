@@ -33,7 +33,7 @@ def DatabaseDictionary(Databaseobj=None):
         j.writelines(' Database version is {}\n'.format(version['database']))
         dictmodel['Version']=version['database']
 
-# creating the audits key in our dictionary
+# creating the child key in our dictionary
 
         dictmodel['Audits']={}
 
@@ -43,35 +43,35 @@ def DatabaseDictionary(Databaseobj=None):
             dictmodel['Audits'][audit['audit_id']]={}
             dictmodel['Audits'][audit['audit_id']]['name']=audit['title']
 
-# creating the assessment key of the dictmodel
+# creating the parent key of the dictmodel
 
-        dictmodel['Assessments']={}
+        dictmodel['Parent']={}
 
-        assessments=Databaseobj.getAssessments()
+        parents=Databaseobj.getParents()
 
-        for assesment in assessments:
-            assess=Databaseobj.getAssessments(assesment['uuid'])
-            j.write(" Assessment: {}, UUID: {}, Test:{}".format(assesment['name'],assesment['uuid'],assess['test']))
-            dictmodel['Assessments'][assesment['uuid']]={}
-            dictmodel['Assessments'][assesment['uuid']]['auditlist']={}
-            dictmodel['Assessments'][assesment['uuid']]['test']=assess['test']
-            dictmodel['Assessments'][assesment['uuid']]['name']=assesment['name']
-            dictmodel['Assessments'][assesment['uuid']]['category']= assesment['category']
-            dictmodel['Assessments'][assesment['uuid']]['uuid']= assesment['uuid']
-            for Assessment_stage in assess['assessment_stages']:
-                for audit_list in Assessment_stage['audit_lists']:
-                    for Audit_member in audit_list['audit_list_members']:
+        for parent in parents:
+            parent=Databaseobj.getAssessments(parent['uuid'])
+            j.write(" Assessment: {}, UUID: {}, Test:{}".format(parent['name'],parent['uuid'],parent['test']))
+            dictmodel['Assessments'][parent['uuid']]={}
+            dictmodel['Assessments'][parent['uuid']]['auditlist']={}
+            dictmodel['Assessments'][parent['uuid']]['test']=parent['test']
+            dictmodel['Assessments'][parent['uuid']]['name']=parent['name']
+            dictmodel['Assessments'][parent['uuid']]['category']= parent['category']
+            dictmodel['Assessments'][parent['uuid']]['uuid']= parent['uuid']
+            for Parent_stage in parent['assessment_stages']:
+                for child_list in Parent_stage['audit_lists']:
+                    for child_member in child_list['audit_list_members']:
 
-                        j.write(" ".format(Audit_member['member_id'],Databaseobj.getAudits(Audit_member['member_id'])['title']
-                                               ,Databaseobj.getAudits(Audit_member['member_id'])['direction']))
+                        j.write(" ".format(Child_member['member_id'],Databaseobj.getAudits(Child_member['member_id'])['title']
+                                               ,Databaseobj.getAudits(Child_member['member_id'])['direction']))
 
-                    dictmodel['Assessments'][assesment['uuid']]['auditlist'][Audit_member['member_id']]\
-                        =Databaseobj.getAudits(Audit_member['member_id'])['title']
+                    dictmodel['Assessments'][parent['uuid']]['auditlist'][Child_member['member_id']]\
+                        =Databaseobj.getAudits(Child_member['member_id'])['title']
 
-            j.write("Total number of audits {}\n\n".format(len(dictmodel['Assessments'][assesment['uuid']]['auditlist'])))
+            j.write("Total number of audits {}\n\n".format(len(dictmodel['Assessments'][parent['uuid']]['auditlist'])))
 
-        for assesment in dictmodel['Assessments']:
-            j.write('Assesment: {} id:{}, Total audits:{} \n'.format(dictmodel['Assessments'][assesment]['name'],assesment,len(dictmodel['Assessments'][assesment]['auditlist'])))
+        for parent in dictmodel['Assessments']:
+            j.write('Assesment: {} id:{}, Total audits:{} \n'.format(dictmodel['Assessments'][parent]['name'],parent,len(dictmodel['Assessments'][parent]['auditlist'])))
 
 
 # creating the Totals key and calculating the totals
@@ -79,15 +79,15 @@ def DatabaseDictionary(Databaseobj=None):
         j.write("Totals:")
         dictmodel['Totals']={}
 
-        TotalAssess=len(dictmodel['Assessments'])
-        j.write('Total number of Assessments : {} \n'.format(TotalAssess))
-        dictmodel['Totals']['TotalAssessments']=TotalAssess
+        TotalParents=len(dictmodel['Parents'])
+        j.write('Total number of Parents : {} \n'.format(TotalParents))
+        dictmodel['Totals']['TotalParents']=TotalParents
 
-        TotalAudits=len(dictmodel['Audits'])
-        j.write("Total number of Audits: {} \n".format(TotalAudits))
-        dictmodel['Totals']['TotalAudits']=TotalAudits
+        TotalAudits=len(dictmodel['Childs'])
+        j.write("Total number of Childs: {} \n".format(TotalAudits))
+        dictmodel['Totals']['TotalChilds']=TotalAudits
 
-        TotalFalseTests=len([assesment for assesment in dictmodel['Assessments'] if not dictmodel['Assessments'][assesment]['test']])
+        TotalFalseTests=len([parent for parent in dictmodel['Parents'] if not dictmodel['Parents'][assesment]['test']])
         j.write("Total False Tests: {} \n".format(TotalFalseTests))
         dictmodel['Totals']['TotalFalseTests']=TotalFalseTests
 
@@ -95,9 +95,9 @@ def DatabaseDictionary(Databaseobj=None):
         j.write("Total True Tests:{} \n".format(TotalTrueTests))
         dictmodel['Totals']['TotalTrueTests']=TotalTrueTests
 
-        TotalAuditsinAssesments=sum([len(dictmodel['Assessments'][assesment]['auditlist']) for assesment in dictmodel['Assessments']])
-        j.write('Total audits in assesssments: {} \n'.format(TotalAuditsinAssesments))
-        dictmodel['Totals']['TotalAuditsinAssesments']=TotalAuditsinAssesments
+        TotalChildsinParents=sum([len(dictmodel['Assessments'][parent]['auditlist']) for parent in dictmodel['Parents']])
+        j.write('Total childs in parents: {} \n'.format(TotalChildsinParents))
+        dictmodel['Totals']['TotalChildsinParents']=TotalChildsinParents
 
     with open('dictmodel_json{}.json'.format(dictmodel['Version']),'w+') as d:
         json.dump(dictmodel,d,indent=2)
@@ -127,13 +127,13 @@ def getDifferences(d1,d2,filename=None):
     with open(filename,"w") as f:
         if type(d1) != type(d2):
             raise Exception("The two dictionaries are not of the same type --- d1 type:{} , d2 type:{}".format(type(d1), type(d2)))
-        if len(d1['Assessments']) == len(d2['Assessments']):
-            f.write("\n" + "Version {} Assessments d1:{} == Version {} Assessments of d2:{}".format(d1Version,len(d1['Assessments']),d2Version,len(d2['Assessments'])))
+        if len(d1['Parents']) == len(d2['Parents']):
+            f.write("\n" + "Version {} Parents d1:{} == Version {} Parents of d2:{}".format(d1Version,len(d1['Parents']),d2Version,len(d2['Parents'])))
         else:
-            f.write("\nWARN: Version {} Assessments d1:{} != Version {} Assessments of d2:{}".format(d1Version, len(d1['Assessments']), d2Version,len(d2[ 'Assessments'])))
+            f.write("\nWARN: Version {} Parents d1:{} != Version {} Parents of d2:{}".format(d1Version, len(d1['Parents']), d2Version,len(d2[ 'Parents'])))
 
         differences_summary={}
-        auditsinAssessment_differences={}
+        childsinParents_differences={}
 
     #checking the content of specific keys from the dictionaries and creating a report based on the information found which will be stored in the argument filename
 
@@ -144,51 +144,51 @@ def getDifferences(d1,d2,filename=None):
 
             for k in d1.keys():
                 if isinstance(d2, dict) and k not in d2:
-                    if all([_ in d1[k] for _ in ['name', 'uuid', 'category', 'auditlist', 'test']]):
+                    if all([_ in d1[k] for _ in ['name', 'uuid', 'category', 'childlist', 'test']]):
                         f.write("\n {}\n{}:{}\nUUID:{}\nTEST:{}\n\n".format(
-                            "=" * len("{}:{}".format('Assessment', d1[k]['name'])), 'Assessment', d1[k]['name'],
+                            "=" * len("{}:{}".format('Parent', d1[k]['name'])), 'Parent', d1[k]['name'],
                             d1[k]['uuid'], d1[k]['test']))
-                        f.write("\n Expected Assessment(d1:{}) {} was not found in (d2:{})".format(d1Version,
+                        f.write("\n Expected Parent(d1:{}) {} was not found in (d2:{})".format(d1Version,
                                                                                                    d1[k]['name'],
                                                                                                    d2Version))
                         f.write(
-                            "\n" + "Expected Audits for {} : \nnumber:{} \nlist:\n".format(d1[k]['name'],
+                            "\n" + "Expected Childs for {} : \nnumber:{} \nlist:\n".format(d1[k]['name'],
                                                                                                       len(d1[k][
-                                                                                                              'auditslist'])))
-                        for audit in d1[k]['auditlist']:
-                              f.write("\n" + audit + " - " + d1[k]['auditlist'][audit])
+                                                                                                              'childlist'])))
+                        for audit in d1[k]['childlist']:
+                              f.write("\n" + audit + " - " + d1[k]['childlist'][audit])
 
                 else:
                     if isinstance(d1[k], dict):
 
-                        if all([_ in d1[k] for _ in ['name', 'uuid', 'category', 'auditlist', 'test']]):
+                        if all([_ in d1[k] for _ in ['name', 'uuid', 'category', 'childlist', 'test']]):
                             f.write("\n" + "{}\n{}:{}\nUUID:{}\nTEST:{}\n\n".format(
-                                "*" * len("{}:{}".format('Assessment', d1[k]['name'])), 'Assessment', d1[k]['name'],
+                                "*" * len("{}:{}".format('Parent', d1[k]['name'])), 'Parent', d1[k]['name'],
                                 d1[k]['uuid'], d1[k]['test']))
 
-                            if len(d1[k]['auditlist']) != len(d2[k]['auditlist']):
+                            if len(d1[k]['childlist']) != len(d2[k]['childlist']):
                                 f.write(
-                                    "\n" + "Expected d1-{} audits :{} \nFound d2-{} audits : {}".format(d1Version, len(
-                                        d1[k]['auditlist']), d2Version, len(d2[k]['auditlist'])))
+                                    "\n" + "Expected d1-{} childs :{} \nFound d2-{} childs : {}".format(d1Version, len(
+                                        d1[k]['childlist']), d2Version, len(d2[k]['childlist'])))
 
-                                NotFoundElementsList = [notFoundelem + " - " + d1[k]['auditlist'][notFoundelem] for notFoundelem in
-                                                      d1[k]['auditlist'] if notFoundelem not in d2[k]['auditlist']]
+                                NotFoundElementsList = [notFoundelem + " - " + d1[k]['childlist'][notFoundelem] for notFoundelem in
+                                                      d1[k]['auditlist'] if notFoundelem not in d2[k]['childlist']]
 
                                 if NotFoundElementsList:
                                     f.write(
-                                        "\n" + "Expected d1-{} audits not found({} auditslist) in d2-{} Audits\nNotFoundElementsList:\n".format(
+                                        "\n" + "Expected d1-{} childs not found({} childlist) in d2-{} Childs\nNotFoundElementsList:\n".format(
                                             d1Version, len(NotFoundElementsList), d2Version))
-                                    for audit in NotFoundElementsList:
-                                        f.write("\n" + audit)
+                                    for child in NotFoundElementsList:
+                                        f.write("\n" + child)
 
-                                # track all assessments with modified audit lists for summary report
-                                auditsinAssessment_differences[k] = d1[k]
+                                # track all parents with modified child lists for summary report
+                                childsinParents_differences[k] = d1[k]
 
                         if path == "":
                             path = str(k)
                         else:
                             path = path + "->" + str(k)
-                        Assessments(d1[k], d2[k])
+                        Parents(d1[k], d2[k])
 
                     else:
 
@@ -202,7 +202,7 @@ def getDifferences(d1,d2,filename=None):
 
 
 
-        def Audits(d1, d2, path=""):
+        def Childs(d1, d2, path=""):
 
             for k in d1.keys():
                 if isinstance(d2, dict) and k not in d2:
@@ -215,7 +215,7 @@ def getDifferences(d1,d2,filename=None):
                             path = str(k)
                         else:
                             path = path + "->" + str(k)
-                        Audits(d1[k], d2[k], path)
+                        Childs(d1[k], d2[k], path)
 
                     else:
 
@@ -264,8 +264,8 @@ def getDifferences(d1,d2,filename=None):
                 f.write(
                     "\n" + "EXPECTED d1-{} items not FOUND({}) in d2-{} \n MissingElem:".format(
                         d1Version, len(MissingElem), d2Version))
-            for missingAudit in MissingElem:
-                f.write("\n" + missingAudit + " - " + MissingElem[missingAudit]['name'])
+            for missingChild in MissingElem:
+                f.write("\n" + missingChild + " - " + MissingElem[missingChild]['name'])
             return MissingElem
 
         # check for missing elements and will create a summary dictionary
@@ -286,7 +286,7 @@ def getDifferences(d1,d2,filename=None):
                     print (e)
                     print (traceback.format_exc())
 
-    return d1Version, d1, d2Version, d2, differences_summary, auditsinAssessment_differences
+    return d1Version, d1, d2Version, d2, differences_summary, childsinParents_differences
 
 @timeit
 @log_on_end(Logger.levels["INFO"], "", logger=mainLogger)
@@ -306,73 +306,73 @@ def Summary(d1,d2,file=None):
 
     if file is None:
         file="DatabaseDifferencesBetween{}and{}Summary.txt".format(d1Version,d2Version)
-    diff_assessments = deepdiff.DeepDiff(d1['Assessments'],d2['Assessments'])
-    diff_audits=deepdiff.DeepDiff(d1['Audits'],d2['Audits'])
+    diff_assessments = deepdiff.DeepDiff(d1['Parents'],d2['Parents'])
+    diff_audits=deepdiff.DeepDiff(d1['Childs'],d2['Childs'])
     diff_totals=deepdiff.DeepDiff(d1['Totals'],d2['Totals'])
-    summary_assesments=json.dumps(json.loads(diff_assessments.to_json()),indent=2)
-    summary_audits=json.dumps(json.loads(diff_audits.to_json()),indent=2)
+    summary_parents=json.dumps(json.loads(diff_parents.to_json()),indent=2)
+    summary_childs=json.dumps(json.loads(diff_childs.to_json()),indent=2)
     summary_totals=json.dumps(json.loads(diff_totals.to_json()),indent=2)
 
     with open(file, "w+") as f:
         f.write("The differences between version {} and version {} are: \n Summary Assessments:{}\n Summary Audits: {}\n Summary Totals: {} \n".format(d1Version,
-                                                                                                                                                       d2Version,summary_assesments,summary_audits, summary_totals))
+                                                                                                                                                       d2Version,summary_parents,summary_childs, summary_totals))
 
 # converting the jsons into dict
 
-        Assessments_summary=json.loads(summary_assesments)
-        Audits_summary=json.loads(summary_audits)
+        Parents_summary=json.loads(summary_parents)
+        Childs_summary=json.loads(summary_childs)
         Totals_summary=json.loads(summary_totals)
 
-# calculating the exact diff between the added, removed and changed keys from the Assessment summary
+# calculating the exact diff between the added, removed and changed keys from the Parent summary
 
-        count_added_assesments = 0
-        count_removed_assesments = 0
-        count_changed_assessments = 0
+        count_added_parents = 0
+        count_removed_parents = 0
+        count_changed_parents = 0
 
-        for k in Assessments_summary:
-            for k1 in Assessments_summary[k]:
+        for k in Parents_summary:
+            for k1 in Parents_summary[k]:
                 if k == 'dictionary_item_added':
-                    count_added_assesments += 1
+                    count_added_parents += 1
                 elif k == 'dictionary_item_removed':
-                    count_removed_assesments += 1
+                    count_removed_parents += 1
                 elif k == 'values_changed':
-                    count_changed_assessments += 1
+                    count_changed_parents += 1
         f.write("\n\n *********************************************** \n\n)")
         f.write("\n\nShort overview of the differences found between {}  and {}: \n\n".format(d1Version,d2Version))
-        f.write("The total number of added assessments: {}, changed: {}, removed: {} \n\n.".format(count_added_assesments,count_changed_assessments,count_removed_assesments))
+        f.write("The total number of added assessments: {}, changed: {}, removed: {} \n\n.".format(count_added_parents,count_changed_parents,count_removed_parents))
 
-# calculating the exact diff between the added, removed and changed keys from the Audit summary
+# calculating the exact diff between the added, removed and changed keys from the Child summary
 
-        count_added_audits = 0
-        count_removed_audits = 0
-        count_changed_audits = 0
+        count_added_childs = 0
+        count_removed_childs = 0
+        count_changed_childs = 0
 
-        for k in Audits_summary:
-            for k1 in Audits_summary[k]:
+        for k in Childs_summary:
+            for k1 in Childs_summary[k]:
                 if k == 'dictionary_item_added':
-                    count_added_audits += 1
+                    count_added_childs += 1
                 elif k == 'dictionary_item_removed':
-                    count_removed_audits += 1
+                    count_removed_childs += 1
                 elif k == 'values_changed':
-                    count_changed_audits += 1
+                    count_changed_childs += 1
         f.write(
             "\nThe total number of added audits: {}, changed: {}, removed: {}.\n\n".format(
-                count_added_audits, count_changed_audits, count_removed_audits))
+                count_added_childs, count_changed_childs, count_removed_childs))
 
 # calculating the exact diff between the totals registered in each version
 
         for k in Totals_summary:
-            f.write("\nTotal assessments difference: {} \n\n".format(
-                Totals_summary[k]["root['TotalAssessments']"]['new_value'] - Totals_summary[k]["root['TotalAssessments']"][
+            f.write("\nTotal parents difference: {} \n\n".format(
+                Totals_summary[k]["root['TotalParents']"]['new_value'] - Totals_summary[k]["root['TotalParents']"][
                     'old_value']))
-            f.write("\nTotal Audits difference: {}\n\n".format(Totals_summary[k]["root['TotalAudits']"]['new_value'] - Totals_summary[k]["root['TotalAudits']"][
+            f.write("\nTotal Childs difference: {}\n\n".format(Totals_summary[k]["root['TotalChilds']"]['new_value'] - Totals_summary[k]["root['TotalChilds']"][
                 'old_value']))
             f.write("\nTotal True tests differences: {}\n\n".format(Totals_summary[k]["root['TotalTrueTests']"]['new_value'] - Totals_summary[k]["root['TotalTrueTests']"][
                 'old_value']))
             f.write("\nTotal false tests differences: {}\n\n".format(Totals_summary[k]["root['TotalFalseTests']"]['new_value'] - Totals_summary[k]["root['TotalFalseTests']"][
                 'old_value']))
-            f.write("\nTotal audits differences: {}".format(Totals_summary[k]["root['TotalAuditsinAssesments']"]['new_value'] -
-                Totals_summary[k]["root['TotalAuditsinAssesments']"]['old_value']))
+            f.write("\nTotal childs differences: {}".format(Totals_summary[k]["root['TotalChildsinPArents']"]['new_value'] -
+                Totals_summary[k]["root['TotalChildsinPArents']"]['old_value']))
 
         f.write("\n\n***************************************************************************")
 
