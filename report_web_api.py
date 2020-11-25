@@ -2,7 +2,10 @@ import flask
 from flask import request, jsonify,render_template
 import os
 from os import path
-
+"""
+Creating a web app with the use a flask in order 
+to display the difference found between the two versions
+"""
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
@@ -15,7 +18,7 @@ def home():
 def api_post():
     if not request.json or not 'title' in request.json:
         print('400')
-    file_path=path.realpath("/home/lexa/Report/JitDifferencesBetween20.8.56.391962and20.8.65.393033Summary.txt")
+    file_path=path.realpath("/home/lexa/Report/DifferencesBetweenxandySummary.txt")
     with open(file_path,"r+") as f:
         return render_template('txt.html', text=f.read())
 
