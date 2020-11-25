@@ -35,11 +35,11 @@ def DatabaseDictionary(Databaseobj=None):
 
         dictmodel['Childs']={}
 
-        audits=Databaseobj.getChilds()
+        childs=Databaseobj.getChilds()
 
         for audit in audits:
-            dictmodel['Childs'][audit['child_id']]={}
-            dictmodel['Childs'][audit['child_id']]['name']=audit['title']
+            dictmodel['Childs'][child['child_id']]={}
+            dictmodel['Childs'][child['child_id']]['name']=childs['title']
 
 # creating the parent key of the dictmodel
 
@@ -58,11 +58,11 @@ def DatabaseDictionary(Databaseobj=None):
             dictmodel['Parents'][parent['uuid']]['uuid']= parent['uuid']
             for Parent_sections in parent['parent_sections']:
                 for child_list in parent_sections['child_lists']:
-                    for child_member in child_list['child_list_members']:
-                        j.write("{}{} ".format(Child_member['member_id'],Databaseobj.getChilds(Child_member['member_id'])['title'])
+                    for child_member in child_list['childmembers']:
+                        j.write("{}{} ".format(Child_member['memberid'],Databaseobj.getChilds(Child_member['memberid'])['title'])
                                )
-                    dictmodel['Parents'][parent['uuid']]['childlist'][Child_member['member_id']]
-                        =Databaseobj.getChilds(Child_member['member_id'])['name']
+                    dictmodel['Parents'][parent['uuid']]['childlist'][Child_member['memberid']]
+                        =Databaseobj.getChilds(Child_member['memberid'])['name']
 
             j.write("Total number of childs {}\n\n".format(len(dictmodel['Parents'][parent['uuid']]['childlist'])))
 
