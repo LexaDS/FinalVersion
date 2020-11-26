@@ -83,9 +83,9 @@ class DatabaseTemplate(object):
 # we will use the request module to get the parents of the Database which will be returned in the form of a dictionary
 
 
-    def getParents(self,uuid=None):
-        if uuid:
-            r=self.sess.get("http://{}:{}/{}/{}".format(self.externalIP,self.ports['3000'],self.urls['api/v1/parents'],uuid))
+    def getParents(self,uid=None):
+        if uid:
+            r=self.sess.get("http://{}:{}/{}/{}".format(self.externalIP,self.ports['3000'],self.urls['api/v1/parents'],uid))
         else:
             r = self.sess.get("http://{}:{}/{}".format(self.externalIP,self.ports['3000'], self.urls['api/v1/parents']))
             if r.status_code!=200:
@@ -95,10 +95,10 @@ class DatabaseTemplate(object):
 # we will use the request module to get the childs of the Database which will be returned in the form of a dictionary
 
 
-    def getChilds(self,member_id=None):
-        if member_id:
+    def getChilds(self,memberid=None):
+        if memberid:
             r = self.sess.get("http://{}:{}/{}/{}".format(self.externalIP,self.ports['3000'],
-                                                   self.urls['api/v1/childs'],member_id))
+                                                   self.urls['api/v1/childs'],memberid))
         else:
             r = self.sess.get("http://{}:{}/{}".format(self.externalIP,self.ports['3000'],
                                             self.urls['api/v1/childs']))
